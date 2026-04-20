@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>viralegg · live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-0: #0a0a0b; --bg-1: #121214; --bg-2: #1a1a1d;
+    --text-0: #f5f0e8; --text-1: #a5a099; --text-2: #6a655f;
+    --amber: #ffb84d; --green: #53fc18; --coral: #ff6b4a;
+    --border: rgba(245, 240, 232, 0.08);
+    --font-serif: 'Instrument Serif', Georgia, serif;
+    --font-mono: 'JetBrains Mono', Menlo, 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg-0); color: var(--text-0); font-family: var(--font-mono); min-height: 100vh; overflow: hidden; position: relative; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 64px 64px; mask-image: radial-gradient(circle at center, transparent 0%, black 85%); -webkit-mask-image: radial-gradient(circle at center, transparent 0%, black 85%); pointer-events: none; z-index: 1; }
+  .container { position: relative; z-index: 2; min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; padding: 32px 48px; gap: 28px; }
+  .header { display: flex; align-items: center; justify-content: space-between; }
+  .header-left { display: flex; align-items: center; gap: 24px; }
+  .live-pill { display: inline-flex; align-items: center; gap: 8px; background: var(--coral); color: #fff; padding: 7px 14px; border-radius: 2px; font-size: 11px; font-weight: 600; letter-spacing: 2.5px; text-transform: uppercase; transition: background 0.3s; }
+  .live-pill.offline { background: var(--text-2); }
+  .live-dot { width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: blink 1.5s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  .brand { font-family: var(--font-serif); font-style: italic; font-size: 56px; font-weight: 400; letter-spacing: -1.5px; line-height: 1; color: var(--text-0); }
+  .header-right { display: flex; gap: 40px; font-size: 10px; letter-spacing: 2px; color: var(--text-2); text-transform: uppercase; align-items: center; }
+  .header-stat { display: flex; flex-direction: column; gap: 4px; text-align: right; }
+  .header-stat strong { color: var(--text-0); font-weight: 500; font-size: 16px; letter-spacing: 0; text-transform: none; }
+  .main { display: grid; grid-template-columns: 280px 1fr 320px; gap: 40px; align-items: start; }
+  .card { background: var(--bg-1); border: 1px solid var(--border); padding: 22px; }
+  .card-title { font-size: 10px; letter-spacing: 3px; color: var(--text-2); text-transform: uppercase; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border); font-weight: 500; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--border); }
+  .stat-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .stat-label { color: var(--text-2); letter-spacing: 1.5px; text-transform: uppercase; font-size: 10px; }
+  .stat-value { font-weight: 500; font-size: 14px; color: var(--text-0); display: inline-flex; align-items: center; gap: 6px; }
+  .stat-value.live { color: var(--green); letter-spacing: 1px; }
+  .stat-value.warm { color: var(--amber); }
+  .stat-value.dim { color: var(--text-2); }
+  .heartbeat { display: inline-block; vertical-align: middle; animation: pulse 0.9s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.35); } }
+  .egg-stage { position: relative; display: flex; align-items: center; justify-content: center; min-height: 60vh; }
+  .egg-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255, 184, 77, 0.14) 0%, rgba(255, 184, 77, 0.04) 40%, transparent 70%); filter: blur(30px); pointer-events: none; animation: glow 5s ease-in-out infinite; }
+  @keyframes glow { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+  .egg-wobble { animation: wobble 9s ease-in-out infinite; }
+  .egg-breathe { animation: breathe 4.2s ease-in-out infinite; transform-origin: center; }
+  @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.028); } }
+  @keyframes wobble { 0%, 100% { transform: rotate(-0.9deg); } 50% { transform: rotate(0.9deg); } }
+  .egg-label { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); font-size: 10px; letter-spacing: 4px; color: var(--text-2); text-transform: uppercase; }
+  .egg-label::before, .egg-label::after { content: '—'; margin: 0 10px; color: var(--text-2); opacity: 0.5; }
+  .leaderboard { padding: 22px; }
+  .lb-entry { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; padding: 11px 0; border-bottom: 1px dashed var(--border); font-size: 12px; align-items: center; }
+  .lb-entry:last-child { border-bottom: none; padding-bottom: 0; }
+  .lb-rank { color: var(--text-2); font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .lb-entry.top-3 .lb-rank { color: var(--amber); }
+  .lb-name { color: var(--text-0); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-count { color: var(--green); font-weight: 500; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .lb-empty { text-align: center; padding: 32px 8px; color: var(--text-1); font-size: 12px; letter-spacing: 1px; line-height: 1.8; }
+  .lb-empty strong { display: block; color: var(--text-0); font-size: 14px; font-weight: 500; margin-bottom: 8px; }
+  .lb-empty span { font-size: 10px; color: var(--text-2); letter-spacing: 2px; text-transform: uppercase; }
+  .progress-block { padding-top: 20px; border-top: 1px solid var(--border); }
+  .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
+  .progress-label { font-size: 11px; letter-spacing: 3px; color: var(--text-2); text-transform: uppercase; font-weight: 500; }
+  .progress-numbers { font-family: var(--font-mono); font-size: 14px; color: var(--text-1); font-variant-numeric: tabular-nums; }
+  .progress-current { font-size: 32px; color: var(--text-0); font-weight: 500; margin-right: 6px; }
+  .progress-bar-wrap { position: relative; height: 10px; background: var(--bg-2); border: 1px solid var(--border); margin-bottom: 18px; }
+  .progress-bar-fill { height: 100%; background: var(--green); box-shadow: 0 0 14px rgba(83, 252, 24, 0.5); transition: width 0.8s ease-out; }
+  .milestones { display: flex; justify-content: space-between; position: relative; }
+  .milestone { text-align: center; position: relative; flex: 1; }
+  .milestone-dot { width: 11px; height: 11px; border: 1px solid var(--text-2); border-radius: 50%; margin: 0 auto 10px; background: var(--bg-0); transition: all 0.3s; }
+  .milestone.hit .milestone-dot { background: var(--green); border-color: var(--green); box-shadow: 0 0 10px rgba(83, 252, 24, 0.7); }
+  .milestone.final .milestone-dot { border-color: var(--amber); }
+  .milestone.final.hit .milestone-dot { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 10px rgba(255, 184, 77, 0.7); }
+  .milestone-name { font-size: 10px; letter-spacing: 2px; color: var(--text-2); text-transform: uppercase; margin-bottom: 3px; }
+  .milestone.hit .milestone-name { color: var(--text-1); }
+  .milestone.final .milestone-name { color: var(--amber); opacity: 0.6; }
+  .milestone.final.hit .milestone-name { opacity: 1; }
+  .milestone-value { font-size: 11px; color: var(--text-1); font-weight: 500; }
+  .milestone.hit .milestone-value { color: var(--text-0); }
+  .crack { transition: opacity 0.8s ease; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header class="header">
+    <div class="header-left">
+      <span class="live-pill" id="live-pill"><span class="live-dot"></span><span id="live-text">Live</span></span>
+      <h1 class="brand">viralegg</h1>
+    </div>
+    <div class="header-right">
+      <div class="header-stat"><span>Watching</span><strong id="viewers">—</strong></div>
+      <div class="header-stat"><span>Uptime</span><strong id="uptime">—</strong></div>
+    </div>
+  </header>
+  <main class="main">
+    <aside class="card">
+      <div class="card-title">Incubator</div>
+      <div class="stat-row"><span class="stat-label">Status</span><span class="stat-value live" id="status-value">CONNECTING</span></div>
+      <div class="stat-row"><span class="stat-label">Temp</span><span class="stat-value warm" id="temp">37.2°C</span></div>
+      <div class="stat-row"><span class="stat-label">Pulse</span><span class="stat-value"><svg class="heartbeat" width="13" height="12" viewBox="0 0 13 12" fill="#ff6b4a" aria-hidden="true"><path d="M6.5 11.3l-.97-.88C1.95 7.14 0 5.4 0 3.3 0 1.56 1.4 0 3.25 0c1.08 0 2.11.51 2.78 1.32h.94C7.64.51 8.67 0 9.75 0 11.6 0 13 1.56 13 3.3c0 2.1-1.95 3.84-5.53 7.12l-.97.88z"/></svg><span id="pulse">72</span> BPM</span></div>
+      <div class="stat-row"><span class="stat-label">Cracks</span><span class="stat-value" id="cracks">0 / 4</span></div>
+      <div class="stat-row"><span class="stat-label">Hatch ETA</span><span class="stat-value dim" id="eta">—</span></div>
+    </aside>
+    <div class="egg-stage">
+      <div class="egg-glow"></div>
+      <div class="egg-wobble"><div class="egg-breathe">
+        <svg id="egg-svg" width="300" height="380" viewBox="0 0 300 380" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="eggFill" cx="36%" cy="28%" r="78%"><stop offset="0%" stop-color="#fdf8ec"/><stop offset="42%" stop-color="#f1e3c0"/><stop offset="82%" stop-color="#c9b284"/><stop offset="100%" stop-color="#9a8458"/></radialGradient>
+            <linearGradient id="shine" x1="0" y1="0" x2="0.6" y2="1"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.6"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+            <radialGradient id="undershadow" cx="50%" cy="80%" r="50%"><stop offset="0%" stop-color="#000000" stop-opacity="0.25"/><stop offset="100%" stop-color="#000000" stop-opacity="0"/></radialGradient>
+          </defs>
+          <ellipse cx="150" cy="195" rx="105" ry="155" fill="url(#eggFill)" stroke="#7d6638" stroke-width="1.5" stroke-opacity="0.45"/>
+          <ellipse cx="150" cy="330" rx="85" ry="22" fill="url(#undershadow)"/>
+          <ellipse cx="113" cy="125" rx="24" ry="42" fill="url(#shine)"/>
+          <path class="crack crack-1" d="M 100 115 L 113 138 L 103 155 L 120 172 L 108 190" stroke="#4a3215" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+          <path class="crack crack-2" d="M 190 155 L 180 176 L 196 192 L 185 212 L 198 230" stroke="#4a3215" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+          <path class="crack crack-3" d="M 140 235 L 156 252 L 142 270 L 160 282" stroke="#4a3215" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+          <path class="crack crack-4" d="M 80 215 L 96 230 L 84 252 L 100 268" stroke="#4a3215" stroke-width="2" fill="none" stroke-linecap="round" opacity="0"/>
+        </svg>
+      </div></div>
+      <div class="egg-label">Specimen 001</div>
+    </div>
+    <aside class="card leaderboard"><div class="card-title">Top Gifters</div><div id="leaderboard-list"></div></aside>
+  </main>
+  <footer class="progress-block">
+    <div class="progress-header">
+      <span class="progress-label">Followers Until Hatch</span>
+      <span class="progress-numbers"><span class="progress-current" id="follower-count">0</span>/ 10,000</span>
+    </div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="width: 0%;"></div></div>
+    <div class="milestones" id="milestones"></div>
+  </footer>
+</div>
+<script>
+const BACKEND_URL = 'https://viralegg-api.onrender.com';
+const LAUNCH_DATE = '2026-04-20T22:00:00Z';
+const POLL_INTERVAL_MS = 15000;
+
+const state = { followers: 0, goal: 10000, viewers: 0, isLive: false, giftLeaderboard: [], lastBackendOk: false };
+const MILESTONES = [
+  { name: 'crack 1', value: 1000,  label: '1k'   },
+  { name: 'crack 2', value: 2500,  label: '2.5k' },
+  { name: 'crack 3', value: 5000,  label: '5k'   },
+  { name: 'crack 4', value: 7500,  label: '7.5k' },
+  { name: 'hatch',   value: 10000, label: '10k', final: true },
+];
+const fmt = n => (n ?? 0).toLocaleString('en-GB');
+
+function renderProgress() {
+  const pct = Math.min(100, (state.followers / state.goal) * 100);
+  document.getElementById('follower-count').textContent = fmt(state.followers);
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+function renderMilestones() {
+  document.getElementById('milestones').innerHTML = MILESTONES.map(m => {
+    const hit = state.followers >= m.value;
+    const cls = [hit ? 'hit' : '', m.final ? 'final' : ''].filter(Boolean).join(' ');
+    return '<div class="milestone ' + cls + '"><div class="milestone-dot"></div><div class="milestone-name">' + m.name + '</div><div class="milestone-value">' + m.label + '</div></div>';
+  }).join('');
+}
+function renderCracks() {
+  const cracksHit = MILESTONES.filter(m => !m.final && state.followers >= m.value).length;
+  for (let i = 1; i <= 4; i++) {
+    const el = document.querySelector('.crack-' + i);
+    if (el) el.style.opacity = i <= cracksHit ? '0.85' : '0';
+  }
+  document.getElementById('cracks').textContent = cracksHit + ' / 4';
+}
+function renderLeaderboard() {
+  const el = document.getElementById('leaderboard-list');
+  if (!state.giftLeaderboard.length) {
+    el.innerHTML = '<div class="lb-empty"><strong>Be the first</strong><span>your name goes here</span></div>';
+    return;
+  }
+  el.innerHTML = state.giftLeaderboard.slice(0, 10).map(e =>
+    '<div class="lb-entry ' + (e.rank <= 3 ? 'top-3' : '') + '"><span class="lb-rank">' + String(e.rank).padStart(2, '0') + '</span><span class="lb-name">' + e.name + '</span><span class="lb-count">' + fmt(e.count) + '</span></div>'
+  ).join('');
+}
+function renderStatus() {
+  const pill = document.getElementById('live-pill');
+  const live = document.getElementById('live-text');
+  const status = document.getElementById('status-value');
+  if (state.isLive) {
+    pill.classList.remove('offline');
+    live.textContent = 'Live';
+    status.textContent = 'OBSERVING';
+    status.classList.add('live');
+  } else {
+    pill.classList.add('offline');
+    live.textContent = 'Offline';
+    status.textContent = state.lastBackendOk ? 'IDLE' : 'CONNECTING';
+    status.classList.remove('live');
+  }
+}
+function renderHeader() {
+  document.getElementById('viewers').textContent = state.isLive ? fmt(state.viewers) : '—';
+  const elapsed = Date.now() - new Date(LAUNCH_DATE).getTime();
+  if (elapsed < 0) { document.getElementById('uptime').textContent = '—'; }
+  else {
+    const days = Math.floor(elapsed / (24 * 3600 * 1000));
+    const hours = Math.floor((elapsed % (24 * 3600 * 1000)) / (3600 * 1000));
+    document.getElementById('uptime').textContent = days + 'd ' + String(hours).padStart(2, '0') + 'h';
+  }
+}
+function renderAll() { renderProgress(); renderMilestones(); renderCracks(); renderLeaderboard(); renderStatus(); renderHeader(); }
+
+async function pollBackend() {
+  try {
+    const res = await fetch(BACKEND_URL + '/state', { cache: 'no-store' });
+    if (!res.ok) throw new Error('status ' + res.status);
+    const data = await res.json();
+    state.followers = data.followers ?? state.followers;
+    state.viewers = data.viewers ?? 0;
+    state.isLive = !!data.is_live;
+    state.lastBackendOk = true;
+    if (Array.isArray(data.leaderboard)) {
+      state.giftLeaderboard = data.leaderboard.map((e, i) => ({ rank: i + 1, name: e.name, count: e.count }));
+    }
+    renderAll();
+  } catch (err) {
+    console.warn('[viralegg] backend poll failed:', err.message);
+    state.lastBackendOk = false;
+    renderStatus();
+  }
+}
+
+setInterval(() => {
+  document.getElementById('temp').textContent = (37 + Math.random() * 0.6).toFixed(1) + '°C';
+  document.getElementById('pulse').textContent = Math.round(68 + Math.random() * 10);
+}, 2000);
+
+renderAll();
+pollBackend();
+setInterval(pollBackend, POLL_INTERVAL_MS);
+</script>
+</body>
+</html>
